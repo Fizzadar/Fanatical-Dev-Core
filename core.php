@@ -4,7 +4,7 @@
 
 	//start debug
 	if( !file_exists( __DIR__ . '/debug.php' ) ) die( 'Core fatal error: no debug.php' );
-	require( __DIR__ . '/debug.php' );
+	require( __DIR__ . '/debug.php' ); //important
 	
 	//fd config, auto-generated array of useful shit
 	$c_config = array(
