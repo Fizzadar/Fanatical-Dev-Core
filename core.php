@@ -30,7 +30,6 @@
 	//load other files
 	$files = array(
 		'message',
-		'time',
 		'app'
 	);
 	foreach( $files as $file ):
