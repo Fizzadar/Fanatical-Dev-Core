@@ -13,13 +13,11 @@
 			//debug
 			$this->debug = $c_debug;
 			$this->debug->add( 'c_app loaded' );
-
 			
-			if(isset($c_config['autoload'])):
-				spl_autoload_register(array($this, 'autoload'), true, true);
-				if(isset($c_config['autoload_map']))
-					$this->autoload_map = $c_config['autoload_map'];
-			endif;
+			//class loading
+			spl_autoload_register( array( $this, 'autoload' ), true, true );
+			if( isset( $c_config['autoload_map'] ) )
+				$this->autoload_map = $c_config['autoload_map'];
 		}
 		
 		public function load( $file ) {
@@ -27,20 +25,12 @@
 			if( !include( $this->app_dir . $file . '.php' ) ) $this->debug->add( 'no load file found: ' . $file );
 		}
 
-		public function autoload($class)
-		{
+		public function autoload( $class ) {
 			global $c_config;
-			if(isset($this->autoload_map[$class]))
-				$path = $this->autoload_map[$class];
+			if( isset( $this->autoload_map[$class] ) and include( $this->autoload_map[$class] ) )
+				$this->debug->add( 'Class ' . $class . ' loaded from ' . $this->autoload_map[$class] );
 			else
-				$path =   $c_debug['core_dir'] . DIRECTORY_SEPARATOR
-						. str_replace('_', DIRECTORY_SEPARATOR, $class) . '.php';
-				
-		
-			if(!include $path)
-				$this->debug->add("Failed to load $class @ '$path'");
-			else
-				$this->debug->add("$class autoloaded from '$path'");	
+				$this->debug->add( 'Failed to load class ' . $class . ' from: ' . $this->autoload_map[$class] );
 		}
 	}
 ?>
