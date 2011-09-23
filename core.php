@@ -27,14 +27,8 @@
 	);
 	$c_debug->add( 'config loaded' );
 	
-	//load other files
-	$files = array(
-		'message',
-		'app'
-	);
-	foreach( $files as $file ):
-		if( !include( $c_config['core_dir'] . '/' . $file . '.php' ) ) $c_debug->add( 'Core file not found/loaded: ' . $file );
-	endforeach;
+	//include app.php
+	if( !include( $c_config['core_dir'] . '/app.php' ) ) $c_debug->add( 'Core file not found/loaded: ' . $file );
 	
 	//send some debug
 	$c_debug->add( 'core is loaded' );
