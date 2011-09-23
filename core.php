@@ -51,7 +51,4 @@
 	
 	//send some debug
 	$c_debug->add( 'core is loaded' );
-	new c_app;
-	new LightOpenID;
-	$c_debug->display();
 ?>
