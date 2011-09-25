@@ -70,9 +70,9 @@
 		}
 		
 		//query funtion, public
-		public function query( $sql ) {
+		public function query( $sql, $cache = false ) {
 			//cached query?
-			if( $this->memcache )
+			if( $cache and $this->memcache )
 				if( $data = $this->memcache->get( sha1( $sql ) ) )
 					return $data;
 			//check mysql connection
@@ -104,7 +104,7 @@
 						if( is_numeric( $c ) )
 							unset( $data[$k][$c] );
 				//caching?
-				if( $this->memcache )
+				if( $cache and $this->memcache )
 					@$this->memcache->add( sha1( $sql ), $data );
 				return $data;
 			else:
