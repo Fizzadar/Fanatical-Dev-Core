@@ -71,6 +71,10 @@
 		
 		//query funtion, public
 		public function query( $sql ) {
+			//cached query?
+			if( $this->memcache )
+				if( $data = $this->memcache->get( sha1( $sql ) ) )
+					return $data;
 			//check mysql connection
 			if( !$this->conn and !$this->connect() ):
 				$this->debug->add( 'No MySQL Connection', 'MySQL' );
@@ -99,6 +103,9 @@
 					foreach( $v as $c => $d )
 						if( is_numeric( $c ) )
 							unset( $data[$k][$c] );
+				//caching?
+				if( $this->memcache )
+					@$this->memcache->add( sha1( $sql ), $data );
 				return $data;
 			else:
 				return $this->data;
