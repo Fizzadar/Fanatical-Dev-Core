@@ -269,6 +269,7 @@
 		
 		//return userid (after check login!)
 		public function get_userid() {
+			if( !$this->check_login() ) return false;
 			return $_COOKIE[$this->cookie_id . 'c_userid'];
 		}
 		
