@@ -32,7 +32,7 @@
 		public function processText( $text ) {
 			//strip html
 			$text = htmlspecialchars( $text );
-			//put back basic html
+			//put back basic html (<i> and <b> allowed)
 			$text = str_replace(
 				array(
 					'&lt;i&gt;',
