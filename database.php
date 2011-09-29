@@ -73,7 +73,7 @@
 		public function query( $sql, $cache = false ) {
 			//cached query?
 			if( $cache and $this->memcache )
-				if( $data = $this->memcache->get( sha1( $sql ) ) )
+				if( $data = $this->memcache->get( 'fd_core_query_' . sha1( $sql ) ) )
 					return $data;
 			//check mysql connection
 			if( !$this->conn and !$this->connect() ):
@@ -105,7 +105,7 @@
 							unset( $data[$k][$c] );
 				//caching?
 				if( $cache and $this->memcache )
-					@$this->memcache->add( sha1( $sql ), $data );
+					@$this->memcache->add( 'fd_core_query_' . sha1( $sql ), $data );
 				return $data;
 			else:
 				return $this->data;
