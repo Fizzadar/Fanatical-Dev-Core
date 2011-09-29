@@ -1,6 +1,6 @@
 <?php
 	//define the core
-	define( 'C_CORE_VER', '1.2.3' );
+	define( 'C_CORE_VER', '1.2.4' );
 
 	//start debug
 	if( !file_exists( __DIR__ . '/debug.php' ) ) die( 'Core fatal error: no debug.php' );
@@ -16,13 +16,13 @@
 		'core_dir' => __DIR__,
 		'core_ver' => C_CORE_VER,
 		'autoload_map' => array(
-			'LightOpenID' => 'lib/LightOpenID.php',
-			'c_app' 	  => 'app.php',
-			'c_db' 		  => 'database.php',
-			'c_template'  => 'template.php',
-			'c_debug'     => 'debug.php',
-			'c_session'   => 'session.php',
-			'c_user'	  => 'user.php'
+			'LightOpenID' => 'lib/LightOpenID',
+			'c_app' 	  => 'app',
+			'c_db' 		  => 'database',
+			'c_template'  => 'template',
+			'c_debug'     => 'debug',
+			'c_session'   => 'session',
+			'c_user'	  => 'user'
 		)
 	);
 	$c_debug->add( 'config loaded' );

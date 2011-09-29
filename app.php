@@ -4,9 +4,8 @@
 	class c_app {
 		private $app_dir;
 		private $debug;
-		private $autoload_map;
 		
-		public function __construct( $app_dir = 'app/' ) {
+		public function __construct( $autoload = array(), $app_dir = 'app/' ) {
 			global $c_debug, $c_config;
 
 			$this->app_dir = $app_dir;
@@ -16,8 +15,8 @@
 			
 			//class loading
 			spl_autoload_register( array( $this, 'autoload' ), true, true );
-			if( isset( $c_config['autoload_map'] ) )
-				$this->autoload_map = $c_config['autoload_map'];
+			foreach( $autoload as $k => $v )
+				$c_config['autoload_map'][$k] = $this->app_dir . 'lib/' . $v;
 		}
 		
 		public function load( $file ) {
@@ -27,10 +26,10 @@
 
 		public function autoload( $class ) {
 			global $c_config;
-			if( isset( $this->autoload_map[$class] ) and include( $this->autoload_map[$class] ) )
-				$this->debug->add( 'Class ' . $class . ' loaded from ' . $this->autoload_map[$class] );
+			if( isset( $c_config['autoload_map'][$class] ) and include( $c_config['autoload_map'][$class] . '.php' ) )
+				$this->debug->add( 'Class ' . $class . ' loaded from ' . $c_config['autoload_map'][$class] );
 			else
-				$this->debug->add( 'Failed to load class ' . $class . ' from: ' . $this->autoload_map[$class] );
+				$this->debug->add( 'Failed to load class ' . $class . ' from: ' . $c_config['autoload_map'][$class] );
 		}
 	}
 ?>
