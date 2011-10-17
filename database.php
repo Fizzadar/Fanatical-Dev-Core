@@ -72,9 +72,12 @@
 		//query funtion, public
 		public function query( $sql, $cache = false ) {
 			//cached query?
-			if( $cache and $this->memcache )
-				if( $data = $this->memcache->get( 'fd_core_query_' . sha1( $sql ) ) )
+			if( $cache and $this->memcache ):
+				if( $data = $this->memcache->get( 'fd_core_query_' . sha1( $sql ) ) ):
+					$this->debug->add( '<strong>Query from cache:</strong>' . sha1( $sql ), 'MySQL' );
 					return $data;
+				endif;
+			endif;
 			//check mysql connection
 			if( !$this->conn and !$this->connect() ):
 				$this->debug->add( 'No MySQL Connection', 'MySQL' );
@@ -84,8 +87,10 @@
 			$this->data = mysql_query( $sql, $this->conn );
 			$err = mysql_error();
 			//error handle
-			if( !empty( $err ) ) $this->debug->add( $err . '<br /><strong>Query:</strong><pre>' . $sql . '</pre>', 'MySQL' );
-			$this->debug->add( 'Query:</strong><br /><pre>' . str_replace( '	', '', $sql ) . '</pre><strong>', 'MySQL' );
+			if( !empty( $err ) )
+				$this->debug->add( $err . '<br /><strong>Query:</strong><pre>' . $sql . '</pre>', 'MySQL' );
+			//debug
+			$this->debug->add( '<strong>Query:</strong><br /><pre>' . str_replace( '	', '', $sql ) . '</pre><strong>', 'MySQL' );
 			//query count
 			$this->queries++;
 			//handle the data
