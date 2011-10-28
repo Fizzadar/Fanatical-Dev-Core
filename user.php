@@ -171,15 +171,16 @@
 			setcookie( $this->cookie_id . 'c_authkey', '', time() - 1, $this->cookie_dir );
 			setcookie( $this->cookie_id . 'c_name', '', time() - 1, $this->cookie_dir );
 			setcookie( $this->cookie_id . 'c_permissions', '', time() - 1, $this->cookie_dir );
+			setcookie( 'fbs_' . $this->c_app_id, '', time() - 1, '/' );
 			//return
 			return true;
 		}
 		
 		//session based login check
 		public function session_login() {
-			if( !isset( $_COOKIE[$this->cookie_id . 'c_userid'] ) )
+			if( !isset( $_COOKIE[$this->cookie_id . 'c_userid'] ) or empty( $_COOKIE[$this->cookie_id . 'c_userid'] ) )
 				return false;
-			if( !isset( $_COOKIE[$this->cookie_id . 'c_authkey'] ) )
+			if( !isset( $_COOKIE[$this->cookie_id . 'c_authkey'] ) or empty( $_COOKIE[$this->cookie_id . 'c_authkey'] ) )
 				return false;
 			if( !isset( $_COOKIE[$this->cookie_id . 'c_name'] ) )
 				return false;
