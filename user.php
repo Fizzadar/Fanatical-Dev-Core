@@ -71,8 +71,8 @@
 				//register
 				$registeruser = $this->db_conn->query( '
 					INSERT INTO core_user
-					( name, auth_key )
-					VALUES ( "' . $name . '", "' . $authkey . '" )
+					( name, auth_key, registration_time, login_time )
+					VALUES ( "' . $name . '", "' . $authkey . '", ' . time() . ', ' . time() . ' )
 				' );
 				if( !$registeruser ) return $this->debug->add( 'mysql_error', 'Error' );
 				//get id, register openid
@@ -90,7 +90,8 @@
 				$name = $checkuser[0]['name'];
 				$this->db_conn->query( '
 					UPDATE core_user
-					SET auth_key = "' . $authkey . '"
+					SET auth_key = "' . $authkey . '",
+					login_time = ' . time() . '
 					WHERE id = "' . $userid . '"
 					LIMIT 1
 				' );
