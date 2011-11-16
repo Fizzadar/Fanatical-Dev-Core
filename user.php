@@ -2,13 +2,13 @@
 	if( !defined( 'C_CORE_VER' ) ) die( 'Error: the core is missing' );
 	
 	class c_user {
-		public static $cookie_id;
+		public $cookie_id;
 		private $c_app_id;
 		private $c_app_secret;
 		private $db_conn;
 		private $checked_login = false;
 		private $debug;
-		protected static $cookie_dir;
+		protected $cookie_dir;
 		
 		public function __construct( $c_db, $cookie_id = '', $c_app_id = '', $c_app_secret = '' ) {
 			global $c_debug, $c_config;
