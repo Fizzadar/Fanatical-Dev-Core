@@ -45,6 +45,7 @@
  * @author Mewp
  * @copyright Copyright (c) 2010, Mewp
  * @license http://www.opensource.org/licenses/mit-license.php MIT
+ * Modified by Fizzadar/Nick Barrett for FD Core: https://github.com/Fizzadar/Fanatical-Dev-Core
  */
 class LightOpenID
 {
@@ -107,6 +108,7 @@ class LightOpenID
         curl_setopt($curl, CURLOPT_HEADER, false);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 30);
         if($method == 'POST') {
             curl_setopt($curl, CURLOPT_POST, true);
             curl_setopt($curl, CURLOPT_POSTFIELDS, $params);
