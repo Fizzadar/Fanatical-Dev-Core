@@ -128,7 +128,7 @@
 			$openid = new LightOpenID;
 			//validate the login
 			try {
-				$result = $openid->validate() 
+				$result = $openid->validate();
 			} catch( Exception $e ) {
 				return false;
 			}
