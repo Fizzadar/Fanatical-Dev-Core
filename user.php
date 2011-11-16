@@ -32,7 +32,7 @@
 			2 = registered, possibly ask for username/email, or just go
 			3 = openid added to current account
 		*/
-		private function login( $openid, $register_name = '' ) {
+		protected function login( $openid, $register_name = '' ) {
 			if( $openid == 'http://facebook.com/profile.php?id=' )
 				return $this->debug->add( 'no fb id', 'Error' );
 			//are we currently logged in? adding an openid?
