@@ -5,9 +5,9 @@
 		public static $cookie_id;
 		private $c_app_id;
 		private $c_app_secret;
-		protected static $db_conn;
+		private $db_conn;
 		private $checked_login = false;
-		protected static $debug;
+		private $debug;
 		protected static $cookie_dir;
 		
 		public function __construct( $c_db, $cookie_id = '', $c_app_id = '', $c_app_secret = '' ) {
