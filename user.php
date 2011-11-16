@@ -127,7 +127,11 @@
 			//start openid
 			$openid = new LightOpenID;
 			//validate the login
-			$result = $openid->validate();
+			try {
+				$result = $openid->validate() 
+			} catch( Exception $e ) {
+				return false;
+			}
 			if( !$result ) return $this->debug->add( 'openid_error', 'Error' );
 			//login!
 			return $this->login( $_GET['openid_identity'] );
