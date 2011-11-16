@@ -5,10 +5,10 @@
 		public $cookie_id;
 		private $c_app_id;
 		private $c_app_secret;
-		private $db_conn;
-		private $checked_login = false;
-		private $debug;
-		private $cookie_dir;
+		protected $db_conn;
+		protected $checked_login = false;
+		protected $debug;
+		protected $cookie_dir;
 		
 		public function __construct( $c_db, $cookie_id = '', $c_app_id = '', $c_app_secret = '' ) {
 			global $c_debug, $c_config;
