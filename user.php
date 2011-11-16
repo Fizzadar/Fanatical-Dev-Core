@@ -8,7 +8,7 @@
 		private $db_conn;
 		private $checked_login = false;
 		private $debug;
-		protected $cookie_dir;
+		private $cookie_dir;
 		
 		public function __construct( $c_db, $cookie_id = '', $c_app_id = '', $c_app_secret = '' ) {
 			global $c_debug, $c_config;
