@@ -13,7 +13,7 @@
 			//unused token, use that
 			if( isset( $_SESSION['fd_core_token'] ) ) return $_SESSION['fd_core_token'];
 			//generate a new random token
-			$_SESSION['token'] = md5( uniqid( rand(), true ) );
+			$_SESSION['fd_core_token'] = md5( uniqid( rand(), true ) );
 			return $_SESSION['fd_core_token'];
 		}
 		
