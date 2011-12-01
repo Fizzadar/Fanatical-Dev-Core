@@ -320,5 +320,11 @@
 			if( !$this->session_login() ) return false;
 			return $_COOKIE[$this->cookie_id . 'c_name'];
 		}
+
+		//session id
+		public function session_userid() {
+			if( !$this->session_login() ) return false;
+			return $_COOKIE[$this->cookie_id . 'c_userid'];
+		}
 	}
 ?>
