@@ -314,14 +314,11 @@
 			' );
 			return $result;
 		}
-		
-		//generate some openid stuff
-		public function openid_urls() {
-			return array(
-				'google' => 'https://www.google.com/accounts/o8/id',
-				'steam' => 'https://steamcommunity.com/openid',
-				'yahoo' => 'https://me.yahoo.com',
-			);
+
+		//session username (aka get username without db)
+		public function session_username() {
+			if( !$this->session_login() ) return false;
+			return $_COOKIE[$this->cookie_id . 'c_name'];
 		}
 	}
 ?>
