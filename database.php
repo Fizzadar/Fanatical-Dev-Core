@@ -130,5 +130,10 @@
 		public function insert_id() {
 			return $this->conn ? mysql_insert_id( $this->conn ) : false;
 		}
+
+		//affected rows
+		public function affected_rows() {
+			return $this->conn ? mysql_affected_rows( $this->conn ) : false;
+		}
 	}
 ?>
