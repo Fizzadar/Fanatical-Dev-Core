@@ -90,7 +90,7 @@
 			if( !empty( $err ) )
 				$this->debug->add( $err . '<br /><strong>Query:</strong><pre>' . $sql . '</pre>', 'MySQL' );
 			//debug
-			$this->debug->add( '<strong>Query:</strong><br /><pre>' . str_replace( '	', '', $sql ) . '</pre><strong>', 'MySQL' );
+			$this->debug->add( '<strong>Query:</strong><br /><pre>' . str_replace( '	', '', $sql ) . '</pre>', 'MySQL' );
 			//query count
 			$this->queries++;
 			//handle the data
