@@ -7,8 +7,10 @@
 		private $c_app_secret;
 		private $db_conn;
 		private $checked_login = false;
+		private $checked_permissions = array();
 		private $debug;
 		private $cookie_dir;
+		public $fb;
 		
 		public function __construct( $c_db, $cookie_id = '', $c_app_id = '', $c_app_secret = '' ) {
 			global $c_debug, $c_config;
@@ -201,6 +203,7 @@
 		
 		//check a permission
 		public function check_permission( $permission ) {
+			if( in_array( $permission, $this->checked_permissions ) ) return true;
 			if( !$this->check_login() ) return false;
 			//query the permission tied to the group of the current user
 			$result = $this->db_conn->query( '
@@ -211,7 +214,12 @@
 				AND core_user.group = core_user_permissions.group_id
 			' );
 			//return
-			return ( isset( $result[0]['id'] ) and $result[0]['id'] == $_COOKIE[$this->cookie_id . 'c_userid'] ) ? true : false;
+			if( isset( $result[0]['id'] ) and $result[0]['id'] == $_COOKIE[$this->cookie_id . 'c_userid'] ):
+				$this->session_permissions[] = $permission;
+				return true;
+			else:
+				return false;
+			endif;
 		}
 		
 		//database based login check
