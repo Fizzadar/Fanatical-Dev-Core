@@ -215,7 +215,7 @@
 			' );
 			//return
 			if( isset( $result[0]['id'] ) and $result[0]['id'] == $_COOKIE[$this->cookie_id . 'c_userid'] ):
-				$this->session_permissions[] = $permission;
+				$this->checked_permissions[] = $permission;
 				return true;
 			else:
 				return false;
