@@ -102,8 +102,11 @@
 			if( $userid and is_numeric( $userid ) ):
 				//basic info
 				setcookie( $this->cookie_id . 'c_userid', $userid, time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+				$_COOKIE[$this->cookie_id . 'c_userid'] = $userid;
 				setcookie( $this->cookie_id . 'c_authkey', $authkey, time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+				$_COOKIE[$this->cookie_id . 'c_authkey'] = $authkey;
 				setcookie( $this->cookie_id . 'c_name', $name, time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+				$_COOKIE[$this->cookie_id . 'c_name'] = $name;
 				//get permissions
 				$perms = $this->db_conn->query( '
 					SELECT permission
@@ -116,6 +119,7 @@
 					$permissions .= $perm['permission'] . ( count( $perms ) == $id + 1 ? '' : ',' );
 				endforeach;
 				setcookie( $this->cookie_id . 'c_permissions', $permissions, time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+				$_COOKIE[$this->cookie_id . 'c_permissions'] = $permissions;
 				//return register or not
 				return ( isset( $registeruser ) and $registeruser ) ? 2 : 1;
 			endif;
