@@ -20,6 +20,11 @@
 			$this->content[$key] = $value;
 		}
 
+		//return some content
+		public function get( $key ) {
+			return isset( $this->content[$key] ) ? $this->content[$key] : false;
+		}
+		
 		//load template
 		public function load( $template ) {
 			global $c_config;
