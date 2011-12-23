@@ -17,6 +17,8 @@
 		'core_ver' => C_CORE_VER,
 		'autoload_map' => array(
 			'LightOpenID' => 'lib/LightOpenID',
+			'Facebook' => 'lib/facebook',
+			'BaseFacebook' => 'lib/base_facebook',
 			'c_app' 	  => 'app',
 			'c_db' 		  => 'database',
 			'c_template'  => 'template',

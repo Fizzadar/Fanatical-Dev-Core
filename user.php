@@ -143,45 +143,33 @@
 			return $this->login( $_GET['openid_identity'] );
 		}
 		
-		//facebook cookie function
-		private function fb_cookie() {
-			//must have app_id & app_secret
-			if( empty( $this->c_app_id ) or empty( $this->c_app_secret ) ) return false;
-			//no cookie at all?
-			if( !isset( $_COOKIE['fbs_' . $this->c_app_id ] ) ) return $this->debug->add( 'facebook_error', 'Error' );
-			//parse the fb cookie
-			$args = array();
-			parse_str( trim( $_COOKIE['fbs_' . $this->c_app_id], '\\"' ), $args );
-			ksort( $args );
-			$payload = '';
-			foreach ($args as $key => $value):
-				if( $key != 'sig' ):
-					$payload .= $key . '=' . $value;
-				endif;
-			endforeach;
-			//wrong cookie stuff?
-			if( md5( $payload . $this->c_app_secret ) != $args['sig'] ) return $this->debug->add( 'facebook_error', 'Error' );
-			//return the args!
-			return $args;
-		}
-		
 		//facebook login
 		public function fb_login() {
-			//get the cookie
-			$cookie = $this->fb_cookie();
-			//remove the cookie (un-needed)
-			setcookie( 'fbs_' . $this->c_app_id, '', time() - 1, $this->cookie_dir );
+			//start the facebook class
+			$fb = new Facebook( array(
+				'appId' => $this->c_app_id,
+				'secret' => $this->c_app_secret,
+				'cookie' => true
+			) );
+			//get our user
+			if( !$fb->getUser() ) return $this->debug->add( 'facebook_error', 'Error' );
+			$uid = $fb->getUser();
 			//login!
-			return $this->login( 'http://facebook.com/profile.php?id=' . $cookie['uid'] );
+			return $this->login( 'http://facebook.com/profile.php?id=' . $uid );
 		}
 		
 		//logout, remove the cookies
 		public function logout() {
 			//remove our cookies
 			setcookie( $this->cookie_id . 'c_userid', '', time() - 1, $this->cookie_dir );
+			unset( $_COOKIE[$this->cookie_id . 'c_userid'] );
 			setcookie( $this->cookie_id . 'c_authkey', '', time() - 1, $this->cookie_dir );
+			unset( $_COOKIE[$this->cookie_id . 'c_authkey'] );
 			setcookie( $this->cookie_id . 'c_name', '', time() - 1, $this->cookie_dir );
+			unset( $_COOKIE[$this->cookie_id . 'c_name'] );
 			setcookie( $this->cookie_id . 'c_permissions', '', time() - 1, $this->cookie_dir );
+			unset( $_COOKIE[$this->cookie_id . 'c_permissions'] );
+			//fb cookie
 			setcookie( 'fbs_' . $this->c_app_id, '', time() - 1, '/' );
 			//return
 			return true;
