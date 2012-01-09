@@ -5,7 +5,8 @@
 		private $validated = false;
 
 		public function __construct() {
-			session_start();
+			if( !session_id() )
+				session_start();
 		}
 		
 		//generate a session id
