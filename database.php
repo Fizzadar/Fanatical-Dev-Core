@@ -36,8 +36,8 @@
 		public function __destruct() {
 			//close connection
 			if( $this->conn ) mysql_close( $this->conn );
-			//debug
-			$this->debug->add( 'Queries: ' . $this->queries, 'MySQL' );
+			//debug (@ because we cant guarantee debug is still alive)
+			@$this->debug->add( 'Queries: ' . $this->queries, 'MySQL' );
 		}
 		
 		//clean data, self referencing function
@@ -96,18 +96,13 @@
 			//handle the data
 			if( is_resource( $this->data ) ):
 				if( mysql_num_rows( $this->data ) == 1 ):
-					$data = array( mysql_fetch_array( $this->data ) );
+					$data = array( mysql_fetch_assoc( $this->data ) );
 				else:
 					$data = array();
 					//add data
-					while( $v = mysql_fetch_array( $this->data ) )
+					while( $v = mysql_fetch_assoc( $this->data ) )
 						$data[] = $v;
 				endif;
-				//strip numbered keys
-				foreach( $data as $k => $v )
-					foreach( $v as $c => $d )
-						if( is_numeric( $c ) )
-							unset( $data[$k][$c] );
 				//caching?
 				if( $cache and $this->memcache )
 					@$this->memcache->add( 'fd_core_query_' . sha1( $sql ), $data );
@@ -115,15 +110,6 @@
 			else:
 				return $this->data;
 			endif;
-		}
-		
-		//get num/affected rows
-		public function num_rows() {
-			if( is_resource( $this->data ) ):
-				if( mysql_num_rows( $this->data ) ) return mysql_num_rows( $this->data );
-				if( mysql_affected_rows( $this->data ) ) return mysql_affected_rows( $this->data );
-			endif;
-			return false;
 		}
 		
 		//get insert id
