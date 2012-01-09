@@ -1,11 +1,21 @@
 <?php
 	//define the core
-	define( 'C_CORE_VER', '1.2.4' );
+	define( 'C_CORE_VER', '1.3.0' );
 
 	//start debug
 	if( !file_exists( __DIR__ . '/debug.php' ) ) die( 'Core fatal error: no debug.php' );
 	require( __DIR__ . '/debug.php' ); //important
 	
+	//no $_SERVER (command line/etc)
+	if( !isset( $_SERVER ) ):
+		$_SERVER['HTTPS'] = '';
+		$_SERVER['HTTP_HOST'] = '';
+		$_SERVER['PHP_SELF'] = '';
+	endif;
+	if( !isset( $_SERVER['HTTPS'] ) ) $_SERVER['HTTPS'] = '';
+	if( !isset( $_SERVER['HTTP_HOST'] ) ) $_SERVER['HTTP_HOST'] = '';
+	if( !isset( $_SERVER['PHP_SELF'] ) ) $_SERVER['PHP_SELF'] = '';
+
 	//fd config, auto-generated array of useful shit
 	$c_config = array(
 		'root' => ( !empty( $_SERVER['HTTPS'] ) ? 'https' : 'http' ) . '://' . $_SERVER['HTTP_HOST'] . rtrim( dirname( $_SERVER['PHP_SELF'] ), '/' ), //base for all index.php routing-based apps
@@ -16,9 +26,11 @@
 		'core_dir' => __DIR__,
 		'core_ver' => C_CORE_VER,
 		'autoload_map' => array(
-			'LightOpenID' => 'lib/LightOpenID',
-			'Facebook' => 'lib/facebook',
-			'BaseFacebook' => 'lib/base_facebook',
+			//externals
+			'LightOpenID' => 'lib/LightOpenID', //openid
+			'Facebook' => 'lib/facebook', //facebook (& base fb)
+			'TwitterOAuth' => 'lib/twitteroauth', //twitter (& oauth)
+			//internals
 			'c_app' 	  => 'app',
 			'c_db' 		  => 'database',
 			'c_template'  => 'template',
