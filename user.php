@@ -3,186 +3,362 @@
 	
 	class c_user {
 		public $cookie_id;
-		private $c_app_id;
-		private $c_app_secret;
+		private $fb_id;
+		private $fb_secret;
+		private $tw_key;
+		private $tw_secret;
 		private $db_conn;
 		private $checked_login = false;
+		private $checked_session_login = false;
 		private $checked_permissions = array();
 		private $debug;
 		private $cookie_dir;
-		public $fb;
 		
-		public function __construct( $c_db, $cookie_id = '', $c_app_id = '', $c_app_secret = '' ) {
+		public function __construct( $c_db, $cookie_id = '' ) {
 			global $c_debug, $c_config;
 			//make sure database is up
-			if( !method_exists( $c_db, 'query' ) ) echo '[Core] <strong>Fatal Error:</strong> Cannot start class: c_user, no database class (c_db) present';
+			if( !method_exists( $c_db, 'query' ) ) return $this->debug->add( 'Cannot start c_user, no database query method', 'Error' );
 			$this->db_conn = $c_db;
 			$this->cookie_id = $cookie_id;
-			$this->c_app_id = $c_app_id;
-			$this->c_app_secret = $c_app_secret;
 			$this->cookie_dir = $c_config['dir'];
 			//debug
 			$this->debug = $c_debug;
 			$this->debug->add( 'c_user class loaded' );
 		}
-		
-		/*
-		login function (also register function)
-		returns:
-			c_debug() = fail
-			1 = logged in
-			2 = registered, possibly ask for username/email, or just go
-			3 = openid added to current account
-		*/
-		protected function login( $openid, $register_name = '' ) {
-			if( $openid == 'http://facebook.com/profile.php?id=' )
-				return $this->debug->add( 'no fb id', 'Error' );
-			//are we currently logged in? adding an openid?
-			if( $this->check_login() ):
-				$check_openid = $this->db_conn->query( '
-					SELECT user_id
-					FROM core_user_openids
-					WHERE open_id = "' . $openid . '"
-					LIMIT 1
-				' );
-				//openid already tied to an account?
-				if( count( $check_openid ) > 0 ) return ( $check_openid[0]['user_id'] == $_COOKIE[$this->cookie_id . 'c_userid'] ) ? $this->debug->add( 'openid_already_owned', 'Error' ) : $this->debug->add( 'openid_exists', 'Error' );
-				//all good, add the openid for this user
-				$add_openid = $this->db_conn->query( '
-					INSERT INTO core_user_openids
-					( user_id, open_id )
-					VALUES ( "' . $_COOKIE[$this->cookie_id . 'c_userid'] . '", "' . $openid . '" )
-				' );
-				return $add_openid ? 3 : $this->debug->add( 'mysql_error', 'Error' );
-			endif;
-			//see if this user exists with this openid
-			$checkuser = $this->db_conn->query( '
-				SELECT core_user_openids.user_id, core_user.group, core_user.name, core_user.auth_key
-				FROM core_user_openids, core_user
-				WHERE core_user_openids.open_id = "' . $openid . '"
-				AND core_user.id = core_user_openids.user_id
-				LIMIT 1
-			' );
-			//generate new auth key
-			$authkey = hash( 'sha512', $openid . microtime() );
-			//no user? register!
-			if( !$checkuser or !is_array( $checkuser[0] ) ):
-				//work out the name
-				$name = empty( $register_name ) ? 'User' . substr( $authkey, 0, 4 ) : $register_name;
-				$group = 1; //default register group
-				//register
-				$registeruser = $this->db_conn->query( '
-					INSERT INTO core_user
-					( name, auth_key, registration_time, login_time )
-					VALUES ( "' . $name . '", "' . $authkey . '", ' . time() . ', ' . time() . ' )
-				' );
-				if( !$registeruser ) return $this->debug->add( 'mysql_error', 'Error' );
-				//get id, register openid
-				$userid = $this->db_conn->insert_id();
-				$registeruser = $this->db_conn->query( '
-					INSERT INTO core_user_openids
-					( user_id, open_id )
-					VALUES ( "' . $userid . '", "' . $openid . '" )
-				' );
-				if( !$registeruser ): return $this->debug->add( 'mysql_error', 'Error' ); endif;
-			else:
-				//set the details
-				$userid = $checkuser[0]['user_id'];
-				$group = $checkuser[0]['group'];
-				$name = $checkuser[0]['name'];
-				$this->db_conn->query( '
-					UPDATE core_user
-					SET auth_key = "' . $authkey . '",
-					login_time = ' . time() . '
-					WHERE id = "' . $userid . '"
-					LIMIT 1
-				' );
-			endif;
-			//finally, login using $userid
-			if( $userid and is_numeric( $userid ) ):
-				//basic info
-				setcookie( $this->cookie_id . 'c_userid', $userid, time() + 60 * 60 * 24 * 365, $this->cookie_dir );
-				$_COOKIE[$this->cookie_id . 'c_userid'] = $userid;
-				setcookie( $this->cookie_id . 'c_authkey', $authkey, time() + 60 * 60 * 24 * 365, $this->cookie_dir );
-				$_COOKIE[$this->cookie_id . 'c_authkey'] = $authkey;
-				setcookie( $this->cookie_id . 'c_name', $name, time() + 60 * 60 * 24 * 365, $this->cookie_dir );
-				$_COOKIE[$this->cookie_id . 'c_name'] = $name;
-				//get permissions
-				$perms = $this->db_conn->query( '
-					SELECT permission
-					FROM core_user_permissions
-					WHERE group_id = ' . $group . '
-				' );
-				//make the permissions look nice
-				$permissions = '';
-				foreach( $perms as $id => $perm ):
-					$permissions .= $perm['permission'] . ( count( $perms ) == $id + 1 ? '' : ',' );
-				endforeach;
-				setcookie( $this->cookie_id . 'c_permissions', $permissions, time() + 60 * 60 * 24 * 365, $this->cookie_dir );
-				$_COOKIE[$this->cookie_id . 'c_permissions'] = $permissions;
-				//return register or not
-				return ( isset( $registeruser ) and $registeruser ) ? 2 : 1;
-			endif;
-			//whaaat?
-			return false;
+
+		//set facebook details
+		public function set_facebook( $app_id, $secret ) {
+			$this->fb_id = $app_id;
+			$this->fb_secret = $secret;
+		}
+
+		//set twitter details
+		public function set_twitter( $key, $secret ) {
+			$this->tw_key = $key;
+			$this->tw_secret = $secret;
 		}
 		
 		//openid login
 		public function openid_login() {
-			if( !$_GET['openid_mode'] ) return $this->debug->add( 'openid_error', 'Error' );
+			//required items for oid
+			if( !$_GET['openid_mode'] or !isset( $_GET['openid_identity'] ) ) return $this->debug->add( 'Invalid oid data sent' );
+
 			//start openid
 			$openid = new LightOpenID;
+
 			//validate the login
 			try {
 				$result = $openid->validate();
 			} catch( Exception $e ) {
-				return false;
+				return $this->debug->add( 'Couldnt validate oid', 'Login' );
 			}
-			if( !$result ) return $this->debug->add( 'openid_error', 'Error' );
-			//login!
-			return $this->login( $_GET['openid_identity'] );
+			if( !$result ) return $this->debug->add( 'Couldnt validate oid, result: ' . $result, 'Login' );
+
+			//login via openid
+			return $this->login_oid( $_GET['openid_identity'] );
 		}
 		
 		//facebook login
 		public function fb_login() {
 			//start the facebook class
 			$fb = new Facebook( array(
-				'appId' => $this->c_app_id,
-				'secret' => $this->c_app_secret,
+				'appId' => $this->fb_id,
+				'secret' => $this->fb_secret,
 				'cookie' => true
 			) );
+
 			//get our user
-			if( !$fb->getUser() ) return $this->debug->add( 'facebook_error', 'Error' );
+			if( !$fb->getUser() ) return $this->debug->add( 'Failed to get facebook user', 'Login' );
 			$uid = $fb->getUser();
-			//login!
-			return $this->login( 'http://facebook.com/profile.php?id=' . $uid );
+
+			//get the access token (hopefully)
+			$token = $fb->getAccessToken() ? $fb->getAccessToken() : '';
+
+			//login via oauth
+			return $this->login_oau( 'facebook', $uid, $token );
 		}
-		
+
+		//twitter login
+		public function tw_login() {
+			//start twitter class
+			$tw = new TwitterOAuth( $this->tw_key, $this->tw_secret, $_SESSION['oauth_token'], $_SESSION['oauth_token_secret'] );
+
+			//get access token
+			$token = @$tw->getAccessToken( $_GET['oauth_verifier'] );
+			if( !$token ) return $this->debug->add( 'Couldnt verify token with twitter', 'Login' );
+
+			//get user
+			$user = $tw->get( 'account/verify_credentials' );
+			if( !empty( $user->error ) ) return $this->debug->add( 'Couldnt verify token with twitter: ' . $user->error, 'Login' );
+			$uid = $user->id;
+
+			//login via oauth
+			return $this->login_oau( 'twitter', $uid, $token['oauth_token'], $token['oauth_token_secret'] );
+		}
+
+		//login via user_id (state: 1 = logged in, 2 = new user logged in, 3 = openid/oauth account added to user, 4 = already logged in and has id)
+		private function login( $id, $state ) {
+			//get user data
+			$user = $this->get_data( $id );
+			//uh oh, there is no user!
+			if( !$user ) return $this->debug->add( 'Failed to load user', 'Login' );
+
+			//update login time
+			$this->db_conn->query( '
+				UPDATE core_user
+				SET login_time = ' . time() . '
+				WHERE id = ' . $id . '
+				LIMIT 1
+			' );
+
+			//get permissions
+			$perms = $this->db_conn->query( '
+				SELECT permission
+				FROM core_user_permissions
+				WHERE group_id = ' . $user['group'] . '
+			' );
+			//make the permissions look nice
+			$permissions = '';
+			foreach( $perms as $id => $perm ):
+				$permissions .= $perm['permission'] . ( count( $perms ) == $id + 1 ? '' : ',' );
+			endforeach;
+
+			//now set our cookies & login!
+			setcookie( $this->cookie_id . 'c_userid', $user['id'], time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+			$_COOKIE[$this->cookie_id . 'c_userid'] = $user['id'];
+			//auth key
+			setcookie( $this->cookie_id . 'c_authkey', $user['auth_key'], time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+			$_COOKIE[$this->cookie_id . 'c_authkey'] = $user['auth_key'];
+			//name
+			setcookie( $this->cookie_id . 'c_name', $user['name'], time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+			$_COOKIE[$this->cookie_id . 'c_name'] = $user['name'];
+			//permissions
+			setcookie( $this->cookie_id . 'c_permissions', $permissions, time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+			$_COOKIE[$this->cookie_id . 'c_permissions'] = $permissions;
+
+			//and we're done!
+			return $state;
+		}
+
+		//login via openid (assuming detailes verified)
+		private function login_oid( $openid ) {
+			//get our user id
+			$id = $this->get_userid();
+			
+			//get the openid
+			$oid = $this->db_conn->query( '
+				SELECT user_id
+				FROM core_user_openids
+				WHERE open_id = "' . $openid . '"
+				LIMIT 1
+			' );
+			if( !is_array( $oid ) )
+				return $this->debug->add( 'Error checking oid', 'Login' );
+
+			//no user and no openid? create a user
+			if( !$id and count( $oid ) != 1 ):
+				$id = $this->register();
+				if( !$id ) return $this->debug->add( 'Failed to register new user', 'Login' );
+				$state = 2; //new user
+			//no user and got id? login as user
+			elseif( !$id and count( $oid ) == 1 ):
+				$id = $oid[0]['user_id'];
+				$state = 1; //normal login
+			//got user and no openid? reg id
+			elseif( $id and count( $oid ) != 1 ):
+				$state = 3; //add openid
+			//got both?
+			else:
+				if( $id != $oid[0]['user_id'] ) return $this->debug->add( 'This is not your openid!', 'Login' );
+				$state = 4; //normal re-login
+			endif;
+
+			//no openid?, add to the user
+			if( count( $oid ) != 1 ):
+				//add the openid
+				$i = $this->db_conn->query( '
+					INSERT INTO core_user_openids
+					( user_id, open_id )
+					VALUES ( ' . $id . ', "' . $openid . '" )
+				' );
+				//fail?
+				if( !$i ) return $this->debug->add( 'Failed to add oid', 'Login' );
+			endif;
+
+			//and finally, lets login
+			return $this->login( $id, $state );
+		}
+
+		//login via oauth (assuming all detailes verified)
+		private function login_oau( $provider, $oid, $token = '', $secret = '' ) {
+			//get our user id
+			$id = $this->get_userid();
+
+			//get the oauth
+			$oau = $this->db_conn->query( '
+				SELECT user_id, token
+				FROM core_user_oauths
+				WHERE provider = "' . $provider . '"
+				AND o_id = "' . $oid . '"
+				LIMIT 1
+			' );
+			if( !is_array( $oau ) )
+				return $this->debug->add( 'Error checking oau', 'Login' );
+
+			//no user and no oauth? create a user
+			if( !$id and count( $oau ) != 1 ):
+				$id = $this->register();
+				if( !$id ) return $this->debug->add( 'Failed to register new user', 'Login' );
+				$state = 2; //new user
+			//no user and got oauth? login as user
+			elseif( !$id and count( $oau ) == 1 ):
+				$id = $oau[0]['user_id'];
+				$state = 1; //normal login
+			//got user and no oauth? reg id
+			elseif( $id and count( $oau ) != 1 ):
+				$state = 3; //add oauth
+			//got both?
+			else:
+				if( $id != $oau[0]['user_id'] ) return $this->debug->add( 'This is not your oauth!', 'Login' );
+				$state = 4; //normal re-login
+			endif;
+
+			//no oauth selected?, add to the user
+			if( count( $oau ) != 1 ):
+				//add the openid
+				$i = $this->db_conn->query( '
+					INSERT INTO core_user_oauths
+					( user_id, provider, o_id, token, secret )
+					VALUES ( ' . $id . ', "' . $provider . '", "' . $oid . '", "' . $token . '", "' . $secret . '" )
+				' );
+				//fail?
+				if( !$i ) return $this->debug->add( 'Failed to add oau', 'Login' );
+			endif;
+			
+			//new token?
+			if( count( $oau ) == 1 and $oau[0]['token'] != $token ):
+				$this->db_conn->query( '
+					UPDATE core_user_oauths
+					SET token = "' . $token . '"
+					WHERE provider = "' . $provider . '"
+					AND user_id = ' . $oau[0]['user_id'] . '
+					AND o_id = ' . $oid . '
+					LIMIT 1
+				' );
+			endif;
+
+			//finally, login
+			return $this->login( $id, $state );
+		}
+
+		//register a user
+		private function register() {
+			//make our name & key
+			$name = 'User' . substr( md5( mt_rand( 1, 1000 ) ), 0, 4 );
+			$auth_key = hash( 'sha512', uniqid() . $name );
+
+			//insert our new user
+			$i = $this->db_conn->query( '
+				INSERT INTO core_user
+				( registration_time, name, auth_key )
+				VALUES ( ' . time() . ', "' . $name . '", "' . $auth_key . '" )
+			' );
+
+			//and return the id (if it worked)
+			return $i ? $this->db_conn->insert_id() : false;
+		}
+
+		//generate openid url
+		public function oid_out( $provider_url, $return_url ) {
+			global $c_config;
+			//start the openid
+			$openid = new LightOpenID;
+			$openid->identity = $provider_url;
+			$openid->realm = $c_config['base'];
+			$openid->returnUrl = $return_url;
+
+			//find our url
+			$out_url = false;
+			try {
+				$out_url = $openid->authUrl();
+			} catch( Exception $e ) {
+				return false;
+			}
+			//return our url
+			return $out_url;
+		}
+
+		//generate facebook url
+		public function fb_out( $return_url, $scope = '' ) {
+			//start the facebook class
+			$fb = new Facebook( array(
+				'appId' => $this->fb_id,
+				'secret' => $this->fb_secret,
+				'cookie' => true
+			) );
+
+			//go!
+			return $fb->getLoginUrl( 
+				array( 
+					'scope' => $scope,
+					'redirect_uri' => $return_url
+				)
+			);
+		}
+
+		//generate twitter url
+		public function tw_out( $return_url ) {
+			//start twitter class
+			$tw = new TwitterOAuth( $this->tw_key, $this->tw_secret );
+
+			//get request token
+			$request_token = $tw->getRequestToken( $return_url );
+
+			//set token data
+			$_SESSION['oauth_token'] = $request_token['oauth_token'];
+			$_SESSION['oauth_token_secret'] = $request_token['oauth_token_secret'];
+
+			//all good?
+			if( $tw->http_code != 200 ) return $this->debug->add( 'Failed to get reqeust token from twitter', 'Login' );
+
+			//generate the url
+			return $tw->getAuthorizeURL( $request_token['oauth_token'] );
+		}
+
 		//logout, remove the cookies
 		public function logout() {
 			//remove our cookies
 			setcookie( $this->cookie_id . 'c_userid', '', time() - 1, $this->cookie_dir );
 			unset( $_COOKIE[$this->cookie_id . 'c_userid'] );
+
 			setcookie( $this->cookie_id . 'c_authkey', '', time() - 1, $this->cookie_dir );
 			unset( $_COOKIE[$this->cookie_id . 'c_authkey'] );
+
 			setcookie( $this->cookie_id . 'c_name', '', time() - 1, $this->cookie_dir );
 			unset( $_COOKIE[$this->cookie_id . 'c_name'] );
+
 			setcookie( $this->cookie_id . 'c_permissions', '', time() - 1, $this->cookie_dir );
 			unset( $_COOKIE[$this->cookie_id . 'c_permissions'] );
-			//fb cookie
-			setcookie( 'fbs_' . $this->c_app_id, '', time() - 1, '/' );
+
 			//return
 			return true;
 		}
 		
 		//session based login check
 		public function session_login() {
+			//already chekced?
+			if( $this->checked_session_login ) return true;
+
+			//check each session bit
 			if( !isset( $_COOKIE[$this->cookie_id . 'c_userid'] ) or empty( $_COOKIE[$this->cookie_id . 'c_userid'] ) )
 				return false;
 			if( !isset( $_COOKIE[$this->cookie_id . 'c_authkey'] ) or empty( $_COOKIE[$this->cookie_id . 'c_authkey'] ) )
 				return false;
 			if( !isset( $_COOKIE[$this->cookie_id . 'c_name'] ) )
 				return false;
+			
+			//return true and set true
+			$this->checked_session_login = true;
 			return true;
 		}
 		
@@ -218,7 +394,10 @@
 		public function check_login() {
 			//already checked?
 			if( $this->checked_login ) return true;
+
+			//session vars not set?
 			if( !$this->session_login() ) return false;
+
 			//lets go!
 			$result = $this->db_conn->query( '
 				SELECT id
@@ -227,6 +406,7 @@
 				AND auth_key = "' . $_COOKIE[$this->cookie_id . 'c_authkey'] . '"
 				LIMIT 1
 			' );
+			
 			//return/speed up
 			if( isset( $result[0]['id'] ) ):
 				$this->checked_login = true;
@@ -278,41 +458,11 @@
 			if( !$this->check_login() ) return false;
 			return $_COOKIE[$this->cookie_id . 'c_userid'];
 		}
-		
-		//return a list of attached openids
-		public function get_openids() {
-			if( !$this->check_login() ) return false;
-			//grab them openid's!
-			$result = $this->db_conn->query( '
-				SELECT open_id
-				FROM core_user_openids
-				WHERE user_id = "' . $_COOKIE[$this->cookie_id . 'c_userid'] . '"
-			' );
-			return is_array( $result ) ? $result : false;
-		}
-		
-		//delete a users openid
-		public function delete_openid( $openid ) {
-			if( !$this->check_login() ) return false;
-			//if this is the last id, don't delete
-			$check_ids = $this->db_conn->query( '
-				SELECT user_id
-				FROM core_user_openids
-				WHERE user_id = "' . $_COOKIE[$this->cookie_id . 'c_userid'] . '"
-			' );
-			if( $check_ids and count( $check_ids ) == 1 ) return $this->debug->add( 'last_openid', 'Error' );
-			//clean openid
-			$cleaner = new c_data();
-			$openid = $cleaner->clean( $openid );
-			//delete the openid
-			$result = $this->db_conn->query( '
-				DELETE
-				FROM core_user_openids
-				WHERE user_id = "' . $_COOKIE[$this->cookie_id . 'c_userid'] . '"
-				AND open_id = "' . $openid . '"
-				LIMIT 1
-			' );
-			return $result;
+
+		//session id
+		public function session_userid() {
+			if( !$this->session_login() ) return false;
+			return $_COOKIE[$this->cookie_id . 'c_userid'];
 		}
 
 		//session username (aka get username without db)
@@ -321,10 +471,49 @@
 			return $_COOKIE[$this->cookie_id . 'c_name'];
 		}
 
-		//session id
-		public function session_userid() {
-			if( !$this->session_login() ) return false;
-			return $_COOKIE[$this->cookie_id . 'c_userid'];
+		//delete openid
+		public function delete_openid( $oid ) {
+			//only if logged in!
+			if( !$this->check_login() ) return false;
+		}
+
+		//delete oauth
+		public function delete_oauth( $provider, $oid ) {
+			//only if logged in!
+			if( !$this->check_login() ) return false;
+		}
+
+		//get openids
+		public function get_openids( $provider = '' ) {
+			//only if logged in!
+			if( !$this->check_login() ) return false;
+
+			//select our oids for user
+			$oids = $this->db_conn->query( '
+				SELECT open_id
+				FROM core_user_openids
+				WHERE user_id = ' . $this->get_userid() . '
+			' );
+
+			//return 'em
+			return $oids;
+		}
+
+		//get oauths
+		public function get_oauths( $provider = '' ) {
+			//only if logged in!
+			if( !$this->check_login() ) return false;
+
+			//select our oauths for the user
+			$oauths = $this->db_conn->query( '
+				SELECT provider, o_id, token, secret
+				FROM core_user_oauths
+				WHERE user_id = ' . $this->get_userid() . '
+				' . ( !empty( $provider ) ? 'AND provider = "' . $provider . '"' : '' ) . '
+			' );
+
+			//return them
+			return $oauths;
 		}
 	}
 ?>
