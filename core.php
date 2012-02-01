@@ -7,14 +7,11 @@
 	require( __DIR__ . '/debug.php' ); //important
 	
 	//no $_SERVER (command line/etc)
-	if( !isset( $_SERVER ) ):
-		$_SERVER['HTTPS'] = '';
-		$_SERVER['HTTP_HOST'] = '';
-		$_SERVER['PHP_SELF'] = '';
-	endif;
+	if( !isset( $_SERVER ) ) $_SERVER = array();
 	if( !isset( $_SERVER['HTTPS'] ) ) $_SERVER['HTTPS'] = '';
 	if( !isset( $_SERVER['HTTP_HOST'] ) ) $_SERVER['HTTP_HOST'] = '';
 	if( !isset( $_SERVER['PHP_SELF'] ) ) $_SERVER['PHP_SELF'] = '';
+	if( !isset( $_SERVER['REQUEST_URI'] ) ) $_SERVER['REQUEST_URI'] = '';
 
 	//fd config, auto-generated array of useful shit
 	$c_config = array(

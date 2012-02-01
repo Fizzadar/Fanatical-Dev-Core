@@ -35,7 +35,7 @@
 		//close the connection if it exsits
 		public function __destruct() {
 			//close connection
-			if( $this->conn ) mysql_close( $this->conn );
+			if( $this->conn ) @mysql_close( $this->conn );
 			//debug (@ because we cant guarantee debug is still alive)
 			@$this->debug->add( 'Queries: ' . $this->queries, 'MySQL' );
 		}
@@ -56,9 +56,9 @@
 		//connection function!
 		public function connect() {
 			//connect
-			$this->conn = @mysql_connect( $this->host, $this->user, $this->pass );
+			$this->conn = mysql_connect( $this->host, $this->user, $this->pass );
 			//select db
-			@mysql_select_db( $this->name, $this->conn );
+			mysql_select_db( $this->name, $this->conn );
 			//before anything happens, clean all public data
 			$_GET = $this->clean( $_GET );
 			$_POST = $this->clean( $_POST );
@@ -78,7 +78,7 @@
 					return $data;
 				endif;
 			endif;
-			//check mysql connection
+			//check mysql connection (and connect)
 			if( !$this->conn and !$this->connect() ):
 				$this->debug->add( 'No MySQL Connection', 'MySQL' );
 				return false;

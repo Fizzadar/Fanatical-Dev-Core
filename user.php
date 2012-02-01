@@ -89,7 +89,7 @@
 
 			//get user
 			$user = $tw->get( 'account/verify_credentials' );
-			if( !empty( $user->error ) ) return $this->debug->add( 'Couldnt verify token with twitter: ' . $user->error, 'Login' );
+			if( !isset( $user->id ) or !empty( $user->error ) ) return $this->debug->add( 'Couldnt verify token with twitter: ' . $user->error, 'Login' );
 			$uid = $user->id;
 
 			//login via oauth
@@ -344,6 +344,15 @@
 			return true;
 		}
 		
+		//reload session data
+		public function relogin() {
+			//if we have a user, make sure return state = relogin (4)
+			if( $id = $this->get_userid() )
+				return $this->login( $id, 4 ) == 4;
+			else
+				return false;
+		}
+
 		//session based login check
 		public function session_login() {
 			//already chekced?
