@@ -8,7 +8,7 @@
 		public function __construct( $autoload = array(), $app_dir = 'app/' ) {
 			global $c_debug, $c_config;
 
-			$this->app_dir = $app_dir;
+			$this->app_dir = __DIR__ . '/../' . $app_dir;
 			//debug
 			$this->debug = $c_debug;
 			$this->debug->add( 'c_app loaded' );
