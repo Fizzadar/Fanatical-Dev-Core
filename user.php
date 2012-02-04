@@ -9,7 +9,6 @@
 		private $tw_secret;
 		private $db_conn;
 		private $checked_login = false;
-		private $checked_session_login = false;
 		private $checked_permissions = array();
 		private $debug;
 		private $cookie_dir;
@@ -20,7 +19,7 @@
 			if( !method_exists( $c_db, 'query' ) ) return $this->debug->add( 'Cannot start c_user, no database query method', 'Error' );
 			$this->db_conn = $c_db;
 			$this->cookie_id = $cookie_id;
-			$this->cookie_dir = $c_config['dir'];
+			$this->cookie_dir = '/';
 			//debug
 			$this->debug = $c_debug;
 			$this->debug->add( 'c_user class loaded' );
@@ -355,9 +354,6 @@
 
 		//session based login check
 		public function session_login() {
-			//already chekced?
-			if( $this->checked_session_login ) return true;
-
 			//check each session bit
 			if( !isset( $_COOKIE[$this->cookie_id . 'c_userid'] ) or empty( $_COOKIE[$this->cookie_id . 'c_userid'] ) )
 				return false;
@@ -366,8 +362,7 @@
 			if( !isset( $_COOKIE[$this->cookie_id . 'c_name'] ) )
 				return false;
 			
-			//return true and set true
-			$this->checked_session_login = true;
+			//return true
 			return true;
 		}
 		
