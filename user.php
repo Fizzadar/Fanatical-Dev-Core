@@ -84,11 +84,11 @@
 
 			//get access token
 			$token = @$tw->getAccessToken( $_GET['oauth_verifier'] );
-			if( !$token ) return $this->debug->add( 'Couldnt verify token with twitter', 'Login' );
+			if( !$token ) return $this->debug->add( 'Could not verify token with twitter', 'Login' );
 
 			//get user
 			$user = $tw->get( 'account/verify_credentials' );
-			if( !isset( $user->id ) or !empty( $user->error ) ) return $this->debug->add( 'Couldnt verify token with twitter: ' . $user->error, 'Login' );
+			if( !isset( $user->id ) or !empty( $user->error ) ) return $this->debug->add( 'Could not verify token with twitter: ' . $user->error, 'Login' );
 			$uid = $user->id;
 
 			//login via oauth
