@@ -42,6 +42,12 @@
 		
 		//clean data, self referencing function
 		public function clean( $data ) {
+			//check mysql connection (and connect)
+			if( !$this->conn and !$this->connect() ):
+				$this->debug->add( 'No MySQL Connection', 'MySQL' );
+				return false;
+			endif;
+			//loop our data recursively
 			if( !is_array( $data ) ):
 				return mysql_real_escape_string( trim( $data ) );
 			else:
@@ -55,8 +61,8 @@
 		
 		//connection function!
 		public function connect() {
-			//connect
-			$this->conn = mysql_connect( $this->host, $this->user, $this->pass );
+			//connect @ incase of no sql, fails at end
+			$this->conn = @mysql_connect( $this->host, $this->user, $this->pass );
 			//select db
 			mysql_select_db( $this->name, $this->conn );
 			//before anything happens, clean all public data
