@@ -25,6 +25,11 @@
 			$this->enabled = true;
 		}
 
+		//disable the debugger
+		public function disable() {
+			$this->enabled = false;
+		}
+
 		//add to debug
 		public function add( $content, $type = 'Message', $return = false ) {
 			if( !$this->enabled ) return $return;
