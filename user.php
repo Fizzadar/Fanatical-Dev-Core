@@ -433,7 +433,7 @@
 			if( !$this->check_login() ) return false;
 			$sql = 'UPDATE core_user SET';
 			foreach( $vars as $k => $v ):
-				$sql .= ' ' . $k . ' = "' . $v . '",';
+				$sql .= ' core_user.' . $k . ' = "' . $v . '",';
 			endforeach;
 			$sql = rtrim( $sql, ',' );
 			$sql .= ' WHERE id = "' . $_COOKIE[$this->cookie_id . 'c_userid'] . '"';
@@ -497,6 +497,7 @@
 				SELECT open_id
 				FROM core_user_openids
 				WHERE user_id = ' . $this->get_userid() . '
+				' . ( !empty( $provider ) ? 'AND provider = "' . $provider . '"' : '' ) . '
 			' );
 
 			//return 'em
