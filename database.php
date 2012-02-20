@@ -63,6 +63,7 @@
 		public function connect() {
 			//connect @ incase of no sql, fails at end
 			$this->conn = @mysql_connect( $this->host, $this->user, $this->pass );
+			if( !$this->conn ) return false;
 			//select db
 			mysql_select_db( $this->name, $this->conn );
 			//before anything happens, clean all public data
