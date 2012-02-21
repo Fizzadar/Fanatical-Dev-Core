@@ -32,8 +32,8 @@
 
 		//add to debug
 		public function add( $content, $type = 'Message', $return = false ) {
+			//disabled debug?
 			if( !$this->enabled ) return $return;
-			global $c_config;
 
 			//add to session & debug array
 			$debug = array(
@@ -50,8 +50,8 @@
 		
 		//display the debug
 		public function display() {
+			//disabled debug?
 			if( !$this->enabled ) return;
-			global $c_config;
 
 				echo '
 		<!--core debug-->
