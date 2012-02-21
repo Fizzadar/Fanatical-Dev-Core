@@ -6,8 +6,8 @@
 # http://code.google.com/p/sequel-pro/
 #
 # Host: localhost (MySQL 5.5.9)
-# Database: browserwards
-# Generation Time: 2012-01-09 02:09:42 +0000
+# Database: feedbug
+# Generation Time: 2012-02-21 15:13:04 +0000
 # ************************************************************
 
 
@@ -30,7 +30,10 @@ CREATE TABLE `core_user` (
   `login_time` int(10) unsigned NOT NULL,
   `name` varchar(30) NOT NULL DEFAULT '',
   `auth_key` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`)
+  `avatar_url` varchar(255) NOT NULL DEFAULT '',
+  `email` varchar(64) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  FULLTEXT KEY `name` (`name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
@@ -79,7 +82,6 @@ CREATE TABLE `core_user_permissions` (
   `permission` varchar(255) NOT NULL,
   UNIQUE KEY `group_id` (`group_id`,`permission`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
 
 
 
