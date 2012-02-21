@@ -121,12 +121,12 @@
 		
 		//get insert id
 		public function insert_id() {
-			return $this->conn ? mysql_insert_id( $this->conn ) : false;
+			return $this->conn ? mysql_insert_id( $this->conn ) : $this->debug->add( 'insert_id: failed: ' . mysql_error(), 'mysql_error', false, true );
 		}
 
 		//affected rows
 		public function affected_rows() {
-			return $this->conn ? mysql_affected_rows( $this->conn ) : false;
+			return $this->conn ? mysql_affected_rows( $this->conn ) : $this->debug->add( 'affected_rows: failed: ' . mysql_error(), 'mysql_error', false, true );
 		}
 	}
 ?>
