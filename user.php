@@ -16,7 +16,7 @@
 		public function __construct( $c_db, $cookie_id = '' ) {
 			global $c_debug, $c_config;
 			//make sure database is up
-			if( !method_exists( $c_db, 'query' ) ) return $this->debug->add( 'Cannot start c_user, no database query method', 'Error' );
+			if( !method_exists( $c_db, 'query' ) ) return $this->debug->add( 'Cannot start c_user, no database query method', 'error', false, true );
 			$this->db_conn = $c_db;
 			$this->cookie_id = $cookie_id;
 			$this->cookie_dir = '/';
@@ -40,7 +40,7 @@
 		//openid login
 		public function openid_login() {
 			//required items for oid
-			if( !$_GET['openid_mode'] or !isset( $_GET['openid_identity'] ) ) return $this->debug->add( 'Invalid oid data sent' );
+			if( !$_GET['openid_mode'] or !isset( $_GET['openid_identity'] ) ) return $this->debug->add( 'Invalid oid data sent', 'login_error', false, true );
 
 			//start openid
 			$openid = new LightOpenID;
@@ -49,9 +49,9 @@
 			try {
 				$result = $openid->validate();
 			} catch( Exception $e ) {
-				return $this->debug->add( 'Couldnt validate oid', 'Login' );
+				return $this->debug->add( 'Couldnt validate oid', 'login_error', false, true );
 			}
-			if( !$result ) return $this->debug->add( 'Couldnt validate oid, result: ' . $result, 'Login' );
+			if( !$result ) return $this->debug->add( 'Couldnt validate oid, result: ' . $result, 'login_error', false, true );
 
 			//login via openid
 			return $this->login_oid( $_GET['openid_identity'] );
@@ -73,11 +73,11 @@
 				try {
 					$user_profile = $fb->api( '/me' );
 				} catch( FacebookApiException $e ) {
-					return $this->debug->add( $e, 'Login' );
+					return $this->debug->add( $e, 'login_error', false, true );
 				}
 			else:
 				//no uid set, fail
-				return $this->debug->add( 'Failed to get facebook user', 'Login' );
+				return $this->debug->add( 'Failed to get facebook user', 'login_error', false, true );
 			endif;
 
 			//get the access token (hopefully)
@@ -94,11 +94,11 @@
 
 			//get access token
 			$token = @$tw->getAccessToken( $_GET['oauth_verifier'] );
-			if( !$token ) return $this->debug->add( 'Could not verify token with twitter', 'Login' );
+			if( !$token ) return $this->debug->add( 'Could not verify token with twitter', 'login_error', false, true );
 
 			//get user
 			$user = $tw->get( 'account/verify_credentials' );
-			if( !isset( $user->id ) or !empty( $user->error ) ) return $this->debug->add( 'Could not verify token with twitter: ' . $user->error, 'Login' );
+			if( !isset( $user->id ) or !empty( $user->error ) ) return $this->debug->add( 'Could not verify token with twitter: ' . $user->error, 'login_error', false, true );
 			$uid = $user->id;
 
 			//login via oauth
@@ -110,7 +110,7 @@
 			//get user data
 			$user = $this->get_data( $id );
 			//uh oh, there is no user!
-			if( !$user ) return $this->debug->add( 'Failed to load user', 'Login' );
+			if( !$user ) return $this->debug->add( 'Failed to load user', 'login_error', false, true );
 
 			//update login time
 			$this->db_conn->query( '
@@ -162,12 +162,12 @@
 				LIMIT 1
 			' );
 			if( !is_array( $oid ) )
-				return $this->debug->add( 'Error checking oid', 'Login' );
+				return $this->debug->add( 'Error checking oid', 'login_error', false, true );
 
 			//no user and no openid? create a user
 			if( !$id and count( $oid ) != 1 ):
 				$id = $this->register();
-				if( !$id ) return $this->debug->add( 'Failed to register new user', 'Login' );
+				if( !$id ) return $this->debug->add( 'Failed to register new user', 'login_error', false, true );
 				$state = 2; //new user
 			//no user and got id? login as user
 			elseif( !$id and count( $oid ) == 1 ):
@@ -178,7 +178,7 @@
 				$state = 3; //add openid
 			//got both?
 			else:
-				if( $id != $oid[0]['user_id'] ) return $this->debug->add( 'This is not your openid!', 'Login' );
+				if( $id != $oid[0]['user_id'] ) return $this->debug->add( 'This is not your openid!', 'login_error', false, true );
 				$state = 4; //normal re-login
 			endif;
 
@@ -191,7 +191,7 @@
 					VALUES ( ' . $id . ', "' . $openid . '" )
 				' );
 				//fail?
-				if( !$i ) return $this->debug->add( 'Failed to add oid', 'Login' );
+				if( !$i ) return $this->debug->add( 'Failed to add oid', 'login_error', false, true );
 			endif;
 
 			//and finally, lets login
@@ -212,12 +212,12 @@
 				LIMIT 1
 			' );
 			if( !is_array( $oau ) )
-				return $this->debug->add( 'Error checking oau', 'Login' );
+				return $this->debug->add( 'Error checking oau', 'login_error', false, true );
 
 			//no user and no oauth? create a user
 			if( !$id and count( $oau ) != 1 ):
 				$id = $this->register();
-				if( !$id ) return $this->debug->add( 'Failed to register new user', 'Login' );
+				if( !$id ) return $this->debug->add( 'Failed to register new user', 'login_error', false, true );
 				$state = 2; //new user
 			//no user and got oauth? login as user
 			elseif( !$id and count( $oau ) == 1 ):
@@ -228,7 +228,7 @@
 				$state = 3; //add oauth
 			//got both?
 			else:
-				if( $id != $oau[0]['user_id'] ) return $this->debug->add( 'This is not your oauth!', 'Login' );
+				if( $id != $oau[0]['user_id'] ) return $this->debug->add( 'This is not your oauth!', 'login_error', false, true );
 				$state = 4; //normal re-login
 			endif;
 
@@ -241,7 +241,7 @@
 					VALUES ( ' . $id . ', "' . $provider . '", "' . $oid . '", "' . $token . '", "' . $secret . '" )
 				' );
 				//fail?
-				if( !$i ) return $this->debug->add( 'Failed to add oau', 'Login' );
+				if( !$i ) return $this->debug->add( 'Failed to add oau', 'login_error', false, true );
 			endif;
 			
 			//new token?
@@ -274,7 +274,7 @@
 			' );
 
 			//and return the id (if it worked)
-			return $i ? $this->db_conn->insert_id() : false;
+			return $i ? $this->db_conn->insert_id() : $this->debug->add( 'Failed to register user', 'login_error', false, true );
 		}
 
 		//generate openid url
@@ -327,7 +327,7 @@
 			$_SESSION['oauth_token_secret'] = $request_token['oauth_token_secret'];
 
 			//all good?
-			if( $tw->http_code != 200 ) return $this->debug->add( 'Failed to get reqeust token from twitter', 'Login' );
+			if( $tw->http_code != 200 ) return $this->debug->add( 'Failed to get reqeust token from twitter', 'login_error', false, true );
 
 			//generate the url
 			return $tw->getAuthorizeURL( $request_token['oauth_token'] );

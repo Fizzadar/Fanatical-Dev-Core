@@ -29,30 +29,8 @@
 		public function load( $template ) {
 			global $c_config;
 			//include
-			$this->debug->add( 'Loading template: ' . $template, 'Template' );
-			if( !include( $this->template_dir . $template . '.php' ) ) return $this->debug->add( 'Template not found: ' . $template, 'Template' );
-		}
-
-		//output user input textarea
-		public function processText( $text ) {
-			//strip html
-			$text = htmlspecialchars( $text );
-			//put back basic html (<i> and <b> allowed)
-			$text = str_replace(
-				array(
-					'&lt;i&gt;',
-					'&lt;/i&gt;',
-					'&lt;b&gt;',
-					'&lt;/b&gt;'
-				),
-				array (
-					'<em>',
-					'</em>',
-					'<strong>',
-					'</strong>'
-				),
-			$text );
-			return $text;
+			$this->debug->add( 'Loading template: ' . $template, 'template' );
+			if( !include( $this->template_dir . $template . '.php' ) ) return $this->debug->add( 'Template not found: ' . $template, 'template' );
 		}
 	}
 ?>

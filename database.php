@@ -37,14 +37,14 @@
 			//close connection
 			if( $this->conn ) @mysql_close( $this->conn );
 			//debug (@ because we cant guarantee debug is still alive)
-			@$this->debug->add( 'Queries: ' . $this->queries, 'MySQL' );
+			@$this->debug->add( 'Queries: ' . $this->queries, 'mysql' );
 		}
 		
 		//clean data, self referencing function
 		public function clean( $data ) {
 			//check mysql connection (and connect)
 			if( !$this->conn and !$this->connect() ):
-				$this->debug->add( 'No MySQL Connection', 'MySQL' );
+				$this->debug->add( 'No MySQL Connection', 'mysql' );
 				return false;
 			endif;
 			//loop our data recursively
@@ -63,7 +63,7 @@
 		public function connect() {
 			//connect @ incase of no sql, fails at end
 			$this->conn = @mysql_connect( $this->host, $this->user, $this->pass );
-			if( !$this->conn ) return false;
+			if( !$this->conn ) return $this->debug->add( 'Failed to connect to mysql' . mysql_error(), 'mysql_error', false, true );
 			//select db
 			mysql_select_db( $this->name, $this->conn );
 			//before anything happens, clean all public data
@@ -71,7 +71,7 @@
 			$_POST = $this->clean( $_POST );
 			$_COOKIE = $this->clean( $_COOKIE );
 			//debug
-			$this->debug->add( 'connecting to MySQL... ' . ( $this->conn ? 'success' : 'failed' ), 'MySQL' );
+			$this->debug->add( 'connecting to MySQL... ' . ( $this->conn ? 'success' : 'failed' ), 'mysql' );
 			//return the connection
 			return $this->conn ? true : false;
 		}
@@ -81,7 +81,7 @@
 			//cached query?
 			if( $cache and $this->memcache ):
 				if( $data = $this->memcache->get( 'fd_core_query_' . sha1( $sql ) ) ):
-					$this->debug->add( '<strong>Query from cache:</strong>' . sha1( $sql ), 'MySQL' );
+					$this->debug->add( '<strong>Query from cache:</strong>' . sha1( $sql ), 'mysql' );
 					return $data;
 				endif;
 			endif;
@@ -95,9 +95,9 @@
 			$err = mysql_error();
 			//error handle
 			if( !empty( $err ) )
-				$this->debug->add( $err . '<br /><strong>Query:</strong><pre>' . $sql . '</pre>', 'MySQL' );
+				$this->debug->add( $err . '<br /><strong>Query:</strong><pre>' . $sql . '</pre>', 'mysql_error', false, true );
 			//debug
-			$this->debug->add( '<strong>Query:</strong><br /><pre>' . str_replace( '	', '', $sql ) . '</pre>', 'MySQL' );
+			$this->debug->add( '<strong>Query:</strong><br /><pre>' . str_replace( '	', '', $sql ) . '</pre>', 'mysql' );
 			//query count
 			$this->queries++;
 			//handle the data
