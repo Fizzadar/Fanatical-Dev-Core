@@ -62,13 +62,21 @@
 			//start the facebook class
 			$fb = new Facebook( array(
 				'appId' => $this->fb_id,
-				'secret' => $this->fb_secret,
-				'cookie' => true
+				'secret' => $this->fb_secret
 			) );
 
 			//get our user
 			if( !$fb->getUser() ) return $this->debug->add( 'Failed to get facebook user', 'Login' );
 			$uid = $fb->getUser();
+
+			//verify the login
+			if( $uid ):
+				try {
+					$user_profile = $fb->api( '/me' );
+				} catch( FacebookApiException $e ) {
+					return $this->debug->add( $e, 'Login' );
+				}
+			endif;
 
 			//get the access token (hopefully)
 			$token = $fb->getAccessToken() ? $fb->getAccessToken() : '';
@@ -292,8 +300,7 @@
 			//start the facebook class
 			$fb = new Facebook( array(
 				'appId' => $this->fb_id,
-				'secret' => $this->fb_secret,
-				'cookie' => true
+				'secret' => $this->fb_secret
 			) );
 
 			//go!
