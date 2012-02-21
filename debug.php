@@ -31,11 +31,13 @@
 		}
 
 		//add to debug
-		public function add( $content, $type = 'Message', $return = false ) {
+		public function add( $content, $type = 'Message', $return = false, $log = false ) {
+			global $c_config;
+
 			//disabled debug?
 			if( !$this->enabled ) return $return;
 
-			//add to session & debug array
+			//add to session
 			$debug = array(
 				'message' => $content,
 				'time' => round( ( microtime( true ) - $this->start ) * 1000, 5 ),
@@ -43,6 +45,12 @@
 				'location' => $_SERVER['REQUEST_URI']
 			);
 			$_SESSION['c_debug'][] = $debug;
+
+			//now write to relevant file
+			if( $log ):
+				$file = fopen( $c_config['core_dir'] . '/log/' . $type . '.txt', 'a' );
+				fwrite( $file, '+' . round( ( microtime( true ) - $this->start ) * 1000, 5 ) . ' ===> ' . $content . "\n" );
+			endif;
 
 			//false return for functions returning debug as error (can be changed as above)
 			return $return;
