@@ -66,7 +66,6 @@
 			) );
 
 			//get our user
-			if( !$fb->getUser() ) return $this->debug->add( 'Failed to get facebook user', 'Login' );
 			$uid = $fb->getUser();
 
 			//verify the login
@@ -76,6 +75,9 @@
 				} catch( FacebookApiException $e ) {
 					return $this->debug->add( $e, 'Login' );
 				}
+			else:
+				//no uid set, fail
+				return $this->debug->add( 'Failed to get facebook user', 'Login' );
 			endif;
 
 			//get the access token (hopefully)
