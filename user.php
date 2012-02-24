@@ -12,6 +12,7 @@
 		private $checked_permissions = array();
 		private $debug;
 		private $cookie_dir;
+		private $cookie_domain;
 		
 		public function __construct( $c_db, $cookie_id = '' ) {
 			global $c_debug, $c_config;
@@ -20,6 +21,7 @@
 			$this->db_conn = $c_db;
 			$this->cookie_id = $cookie_id;
 			$this->cookie_dir = '/';
+			$this->cookie_domain = '.' . $c_config['host'];
 			//debug
 			$this->debug = $c_debug;
 			$this->debug->add( 'c_user class loaded' );
@@ -133,16 +135,16 @@
 			endforeach;
 
 			//now set our cookies & login!
-			setcookie( $this->cookie_id . 'c_userid', $user['id'], time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+			setcookie( $this->cookie_id . 'c_userid', $user['id'], time() + 60 * 60 * 24 * 365, $this->cookie_dir, $this->cookie_domain );
 			$_COOKIE[$this->cookie_id . 'c_userid'] = $user['id'];
 			//auth key
-			setcookie( $this->cookie_id . 'c_authkey', $user['auth_key'], time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+			setcookie( $this->cookie_id . 'c_authkey', $user['auth_key'], time() + 60 * 60 * 24 * 365, $this->cookie_dir, $this->cookie_domain );
 			$_COOKIE[$this->cookie_id . 'c_authkey'] = $user['auth_key'];
 			//name
-			setcookie( $this->cookie_id . 'c_name', $user['name'], time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+			setcookie( $this->cookie_id . 'c_name', $user['name'], time() + 60 * 60 * 24 * 365, $this->cookie_dir, $this->cookie_domain );
 			$_COOKIE[$this->cookie_id . 'c_name'] = $user['name'];
 			//permissions
-			setcookie( $this->cookie_id . 'c_permissions', $permissions, time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+			setcookie( $this->cookie_id . 'c_permissions', $permissions, time() + 60 * 60 * 24 * 365, $this->cookie_dir, $this->cookie_domain );
 			$_COOKIE[$this->cookie_id . 'c_permissions'] = $permissions;
 
 			//and we're done!
@@ -336,16 +338,16 @@
 		//logout, remove the cookies
 		public function logout() {
 			//remove our cookies
-			setcookie( $this->cookie_id . 'c_userid', '', time() - 1, $this->cookie_dir );
+			setcookie( $this->cookie_id . 'c_userid', '', time() - 1, $this->cookie_dir, $this->cookie_domain );
 			unset( $_COOKIE[$this->cookie_id . 'c_userid'] );
 
-			setcookie( $this->cookie_id . 'c_authkey', '', time() - 1, $this->cookie_dir );
+			setcookie( $this->cookie_id . 'c_authkey', '', time() - 1, $this->cookie_dir, $this->cookie_domain );
 			unset( $_COOKIE[$this->cookie_id . 'c_authkey'] );
 
-			setcookie( $this->cookie_id . 'c_name', '', time() - 1, $this->cookie_dir );
+			setcookie( $this->cookie_id . 'c_name', '', time() - 1, $this->cookie_dir, $this->cookie_domain );
 			unset( $_COOKIE[$this->cookie_id . 'c_name'] );
 
-			setcookie( $this->cookie_id . 'c_permissions', '', time() - 1, $this->cookie_dir );
+			setcookie( $this->cookie_id . 'c_permissions', '', time() - 1, $this->cookie_dir, $this->cookie_domain );
 			unset( $_COOKIE[$this->cookie_id . 'c_permissions'] );
 
 			//return
@@ -433,21 +435,32 @@
 		public function set_name( $name ) {
 			if( !$this->check_login() ) return false;
 			$result = $this->set_data( 'name', $name );
-			if( $result ) setcookie( $this->cookie_id . 'c_name', $name, time() + 60 * 60 * 24 * 365, $this->cookie_dir );
+			if( $result ) setcookie( $this->cookie_id . 'c_name', $name, time() + 60 * 60 * 24 * 365, $this->cookie_dir, $this->cookie_domain );
 			return $result;
 		}
 		
 		//set user data
 		public function set_data( $vars ) {
+			//check login
 			if( !$this->check_login() ) return false;
+			$name = false;
+
+			//build sql
 			$sql = 'UPDATE core_user SET';
 			foreach( $vars as $k => $v ):
 				$sql .= ' core_user.' . $k . ' = "' . $v . '",';
+				if( $k == 'name' ) $name = $v;
 			endforeach;
 			$sql = rtrim( $sql, ',' );
 			$sql .= ' WHERE id = "' . $_COOKIE[$this->cookie_id . 'c_userid'] . '"';
+
 			//change the email
 			$result = $this->db_conn->query( $sql );
+
+			//name?
+			if( $result and $name )
+				setcookie( $this->cookie_id . 'c_name', $name, time() + 60 * 60 * 24 * 365, $this->cookie_dir, $this->cookie_domain );
+			
 			return $result;
 		}
 		

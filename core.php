@@ -9,6 +9,7 @@
 	$c_config = array(
 		'root' => ( !empty( $_SERVER['HTTPS'] ) ? 'https' : 'http' ) . '://' . $_SERVER['HTTP_HOST'] . rtrim( dirname( $_SERVER['PHP_SELF'] ), '/' ), //base for all index.php routing-based apps
 		'base' => ( !empty( $_SERVER['HTTPS'] ) ? 'https' : 'http' ) . '://' . $_SERVER['HTTP_HOST'],
+		'host' => $_SERVER['HTTP_HOST'],
 		'core_dir' => __DIR__,
 		'core_ver' => C_CORE_VER,
 		'autoload_map' => array(
