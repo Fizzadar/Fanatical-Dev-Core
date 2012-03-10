@@ -207,7 +207,7 @@
 
 			//get the oauth
 			$oau = $this->db_conn->query( '
-				SELECT user_id, token
+				SELECT user_id, token, secret
 				FROM core_user_oauths
 				WHERE provider = "' . $provider . '"
 				AND o_id = "' . $oid . '"
@@ -247,10 +247,11 @@
 			endif;
 			
 			//new token?
-			if( count( $oau ) == 1 and $oau[0]['token'] != $token ):
+			if( count( $oau ) == 1 and ( $oau[0]['token'] != $token or $oau[0]['secret'] != $secret ) ):
 				$this->db_conn->query( '
 					UPDATE core_user_oauths
-					SET token = "' . $token . '"
+					SET token = "' . $token . '",
+					secret = "' . $secret . '"
 					WHERE provider = "' . $provider . '"
 					AND user_id = ' . $oau[0]['user_id'] . '
 					AND o_id = ' . $oid . '
@@ -484,7 +485,7 @@
 			if( !$this->check_login() ) return false;
 			return $_COOKIE[$this->cookie_id . 'c_userid'];
 		}
-
+		
 		//session id
 		public function session_userid() {
 			if( !$this->session_login() ) return false;
