@@ -498,20 +498,43 @@
 			return $_COOKIE[$this->cookie_id . 'c_name'];
 		}
 
-		//delete openid
+		//delete openid (does no check if is last id/auth)
 		public function delete_openid( $oid ) {
 			//only if logged in!
 			if( !$this->check_login() ) return false;
+
+			//delete
+			$delete = $this->db_conn->query( '
+				DELETE FROM core_user_openids
+				WHERE user_id = ' . $this->get_userid() . '
+				AND open_id = "' . $oid . '"
+				LIMIT 1
+			' );
+
+			//return
+			return $delete;
 		}
 
-		//delete oauth
+		//delete oauth (does no check if is last id/auth)
 		public function delete_oauth( $provider, $oid ) {
 			//only if logged in!
 			if( !$this->check_login() ) return false;
+
+			//delete
+			$delete = $this->db_conn->query( '
+				DELETE FROM core_user_oauths
+				WHERE user_id = ' . $this->get_userid() . '
+				AND provider = "' . $provider . '"
+				AND o_id = ' . $oid . '
+				LIMIT 1
+			' );
+
+			//return
+			return $delete;
 		}
 
 		//get openids
-		public function get_openids( $provider = '' ) {
+		public function get_openids() {
 			//only if logged in!
 			if( !$this->check_login() ) return false;
 
@@ -519,9 +542,8 @@
 			$oids = $this->db_conn->query( '
 				SELECT open_id
 				FROM core_user_openids
-				WHERE user_id = ' . $this->get_userid() . '
-				' . ( !empty( $provider ) ? 'AND provider = "' . $provider . '"' : '' ) . '
-			' );
+				WHERE user_id = ' . $this->get_userid()
+			);
 
 			//return 'em
 			return $oids;
@@ -537,8 +559,8 @@
 				SELECT provider, o_id, token, secret
 				FROM core_user_oauths
 				WHERE user_id = ' . $this->get_userid() . '
-				' . ( !empty( $provider ) ? 'AND provider = "' . $provider . '"' : '' ) . '
-			' );
+				' . ( !empty( $provider ) ? 'AND provider = "' . $provider . '"' : '' )
+			);
 
 			//return them
 			return $oauths;
