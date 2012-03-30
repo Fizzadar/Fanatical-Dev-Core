@@ -17,6 +17,7 @@
 		//start this, no connection, setup only!
 		public function __construct( $db_host, $db_user, $db_pass, $db_name, $mod_memcache = false ) {
 			global $c_debug;
+			
 			//set some vars
 			$this->host = $db_host;
 			$this->user = $db_user;
@@ -24,9 +25,11 @@
 			$this->name = $db_name;
 			$this->conn = false;
 			$this->queries = 0;
+
 			//memcache?
 			if( $mod_memcache )
 				$this->memcache = $mod_memcache;
+
 			//debug
 			$this->debug = $c_debug;
 			$this->debug->add( 'c_db class loaded' );
@@ -36,6 +39,7 @@
 		public function __destruct() {
 			//close connection
 			if( $this->conn ) @mysql_close( $this->conn );
+
 			//debug (@ because we cant guarantee debug is still alive)
 			@$this->debug->add( 'Queries: ' . $this->queries, 'mysql' );
 		}
@@ -47,6 +51,7 @@
 				$this->debug->add( 'No MySQL Connection', 'mysql' );
 				return false;
 			endif;
+
 			//loop our data recursively
 			if( !is_array( $data ) ):
 				return mysql_real_escape_string( trim( $data ) );
@@ -77,7 +82,7 @@
 		}
 		
 		//query funtion, public
-		public function query( $sql, $cache = false ) {
+		public function query( $sql, $cache = false, $cache_time = 0 ) {
 			//cached query?
 			if( $cache and $this->memcache ):
 				if( $data = $this->memcache->get( 'fd_core_query_' . sha1( $sql ) ) ):
@@ -85,21 +90,27 @@
 					return $data;
 				endif;
 			endif;
+
 			//check mysql connection (and connect)
 			if( !$this->conn and !$this->connect() ):
 				$this->debug->add( 'No MySQL Connection', 'MySQL' );
 				return false;
 			endif;
+
 			//do the query
 			$this->data = mysql_query( $sql, $this->conn );
 			$err = mysql_error();
+
 			//error handle
 			if( !empty( $err ) )
 				$this->debug->add( $err . '<br /><strong>Query:</strong><pre>' . $sql . '</pre>', 'mysql_error', false, true );
+
 			//debug
 			$this->debug->add( '<strong>Query:</strong><br /><pre>' . str_replace( '	', '', $sql ) . '</pre>', 'mysql' );
+
 			//query count
 			$this->queries++;
+
 			//handle the data
 			if( is_resource( $this->data ) ):
 				if( mysql_num_rows( $this->data ) == 1 ):
@@ -110,11 +121,18 @@
 					while( $v = mysql_fetch_assoc( $this->data ) )
 						$data[] = $v;
 				endif;
+
 				//caching?
 				if( $cache and $this->memcache )
-					@$this->memcache->add( 'fd_core_query_' . sha1( $sql ), $data );
+					if( $cache_time <= 0 )
+						@$this->memcache->add( 'fd_core_query_' . sha1( $sql ), $data );
+					else
+						@$this->memcache->add( 'fd_core_query_' . sha1( $sql ), $data, 0, $cache_time );
+
+				//return our data!
 				return $data;
 			else:
+				//return the return (not a resources = bug?)
 				return $this->data;
 			endif;
 		}
