@@ -81,13 +81,19 @@
 			return $this->conn ? true : false;
 		}
 		
-		//query funtion, public
+		//query funtion, public, returns an array of rows on select, default on other
 		public function query( $sql, $cache = false, $cache_time = 0 ) {
 			//cached query?
 			if( $cache and $this->memcache ):
-				if( $data = $this->memcache->get( 'fd_core_query_' . sha1( $sql ) ) ):
-					$this->debug->add( '<strong>Query from cache:</strong>' . sha1( $sql ), 'mysql' );
+				$cached_name = 'fd_core_query_' . sha1( $sql );
+
+				//attempt to fetch data
+				$data = @$this->memcache->get( $cached_name );
+				if( is_array( $data ) ):
+					$this->debug->add( 'Query from cache: ' . $cached_name, 'mysql' );
 					return $data;
+				else:
+					$this->debug->add( 'Not found in query cache: ' . $cached_name, 'mysql' );
 				endif;
 			endif;
 
@@ -103,10 +109,10 @@
 
 			//error handle
 			if( !empty( $err ) )
-				$this->debug->add( $err . '<br /><strong>Query:</strong><pre>' . $sql . '</pre>', 'mysql_error', false, true );
+				$this->debug->add( $err . '<br />Query:<pre>' . $sql . '</pre>', 'mysql_error', false, true );
 
 			//debug
-			$this->debug->add( '<strong>Query:</strong><br /><pre>' . str_replace( '	', '', $sql ) . '</pre>', 'mysql' );
+			$this->debug->add( 'Query:<br /><pre>' . str_replace( '	', '', $sql ) . '</pre>', 'mysql' );
 
 			//query count
 			$this->queries++;
@@ -125,14 +131,14 @@
 				//caching?
 				if( $cache and $this->memcache )
 					if( $cache_time <= 0 )
-						@$this->memcache->add( 'fd_core_query_' . sha1( $sql ), $data );
+						@$this->memcache->set( $cached_name, $data, 0 );
 					else
-						@$this->memcache->add( 'fd_core_query_' . sha1( $sql ), $data, 0, $cache_time );
+						$this->memcache->set( $cached_name, $data, 0, $cache_time );
 
 				//return our data!
 				return $data;
 			else:
-				//return the return (not a resources = bug?)
+				//return the return if not resource
 				return $this->data;
 			endif;
 		}
