@@ -358,8 +358,8 @@
 		//reload session data
 		public function relogin() {
 			//if we have a user, make sure return state = relogin (4)
-			if( $id = $this->get_userid() )
-				return $this->login( $id, 4 ) == 4;
+			if( $id = $this->get_userid() and $this->login( $id, 4 ) == 4 )
+				return 4;
 			else
 				return false;
 		}
@@ -388,6 +388,7 @@
 		//check a permission
 		public function check_permission( $permission ) {
 			if( in_array( $permission, $this->checked_permissions ) ) return true;
+			if( !$this->session_permission( $permission ) ) return false;
 			if( !$this->check_login() ) return false;
 			//query the permission tied to the group of the current user
 			$result = $this->db_conn->query( '
