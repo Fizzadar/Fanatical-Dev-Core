@@ -5,6 +5,10 @@
 	//start debug
 	require( __DIR__ . '/debug.php' ); //important
 
+	//no host? localhost
+	if( !isset( $_SERVER['HTTP_HOST'] ) )
+		$_SERVER['HTTP_HOST'] = 'localhost';
+	
 	//fd config, auto-generated array of useful shit
 	$c_config = array(
 		'root' => ( !empty( $_SERVER['HTTPS'] ) ? 'https' : 'http' ) . '://' . $_SERVER['HTTP_HOST'] . rtrim( dirname( $_SERVER['PHP_SELF'] ), '/' ), //base for all index.php routing-based apps
