@@ -9,7 +9,7 @@
 		public function __construct( $template_dir = 'app/templates/' ) {
 			global $c_debug;
 			//set defaults (with defaults)
-			$this->template_dir = $template_dir;
+			$this->template_dir = __DIR__ . '/../' . $template_dir;
 			//debug
 			$this->debug = $c_debug;
 			$this->debug->add( 'c_template class loaded' );

@@ -1,6 +1,6 @@
 <?php
 	//define the core
-	define( 'C_CORE_VER', '1.3.0' );
+	define( 'C_CORE_VER', '1.3.1' );
 
 	//start debug
 	require( __DIR__ . '/debug.php' ); //important
@@ -22,12 +22,13 @@
 			'Facebook' => 'lib/facebook', //facebook (& base fb)
 			'TwitterOAuth' => 'lib/twitteroauth', //twitter (& oauth)
 			//internals
-			'c_app' 	  => 'app',
-			'c_db' 		  => 'database',
-			'c_template'  => 'template',
-			'c_debug'     => 'debug',
-			'c_session'   => 'session',
-			'c_user'	  => 'user'
+			'c_app' => 'app',
+			'c_db' => 'database',
+			'c_template' => 'template',
+			'c_debug' => 'debug',
+			'c_session' => 'session',
+			'c_user' => 'user',
+			'c_cookie' => 'cookie'
 		)
 	);
 	$c_debug->add( 'config loaded' );

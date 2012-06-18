@@ -3,7 +3,6 @@
 	
 	class c_debug {
 		private $start;
-		private $enabled = false;
 		
 		public function __construct() {
 			//start time
@@ -20,29 +19,16 @@
 
 		}
 		
-		//enable the debugger
-		public function enable() {
-			$this->enabled = true;
-		}
-
-		//disable the debugger
-		public function disable() {
-			$this->enabled = false;
-		}
-
 		//add to debug
-		public function add( $content, $type = 'Message', $return = false, $log = false ) {
+		public function add( $content, $type = 'message', $return = false, $log = false ) {
 			global $c_config;
-
-			//disabled debug?
-			if( !$this->enabled ) return $return;
 
 			//add to session
 			$debug = array(
 				'message' => $content,
 				'time' => round( ( microtime( true ) - $this->start ) * 1000, 5 ),
-				'type' => $type,
-				'location' => $_SERVER['REQUEST_URI']
+				'type' => strtolower( $type ),
+				'location' => isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : ''
 			);
 			$_SESSION['c_debug'][] = $debug;
 
@@ -58,25 +44,115 @@
 		
 		//display the debug
 		public function display() {
-			//disabled debug?
-			if( !$this->enabled ) return;
+			//work out bits
+			$messages = array();
+			$queries = array();
 
-				echo '
-		<!--core debug-->
-		<div id="c_debug" style="position:fixed;top:0;left:0;width:98%;height:98%;background:#EEEEEE;color:#1A1B1B;font-family:Arial;text-shadow:none;font-size:13px;line-height:20px;padding:1%;z-index:9999999999;display:none;overflow:auto;"><h2>Core Debug</h2>';
-				
-				foreach( $_SESSION['c_debug'] as $k => $v ):
-					echo '<strong>' . $v['type'] . ':</strong> ' . $v['message'] . ' <small>+' . $v['time'] . 'ms / request: ' . $v['location'] . '</small>';
-					echo '<br />';
-				endforeach;
-
-				echo '<br />End  Debug<small> +' . round( ( microtime( true ) - $this->start ) * 1000, 5 ) . 'ms</small>';
-				echo '</div><!--end c_debug--><script type="text/javascript">if( String( window.location ).search( \'#debug\' ) > -1 ) { document.getElementById( \'c_debug\' ).style.display = \'block\'; }</script>
-		<a title="View debug" href="#debug" onclick="if(document.getElementById(\'c_debug\').style.display == \'block\' ) { document.getElementById(\'c_debug\').style.display = \'none\'; history.go( -1 ); } else { document.getElementById(\'c_debug\').style.display=\'block\'; }" style="position:fixed;top:0;right:0;color:#333333;text-shadow:none;background:#F7F7F7;z-index:9999999999;font-family:Arial;font-size:12px;text-decoration:none;padding:5px;border:1px solid #D7D7D7;border-width:0 0 1px 1px;">Debug</a>
-		<!--/core debug-->';
+			//loop messages
+			foreach( $_SESSION['c_debug'] as $k => $v )
+				if( in_array( $v['type'], array( 'mysql_query', 'mysql_query_error' ) ) )
+					$queries[] = $v;
+				else
+					$messages[] = $v;
 
 			//empty array
 			$_SESSION['c_debug'] = array();
+
+			//time
+			$time = round( ( microtime( true ) - $this->start ) * 1000, 3 );
+
+			//memory usage
+			$memory = round( memory_get_usage() / ( 1024 * 1024 ), 3 );
+		?>
+			<style type="text/css">
+				div#c_debug {
+					position: fixed;
+					bottom: 0;
+					left: 0;
+					height: 300px;
+					width: 100%;
+					background: #F7F7F7;
+					border-top: 1px solid #D7D7D7;
+					z-index: 99999999999;
+					overflow: auto;
+					font-family: Arial;
+					font-size: 12px;
+					display: none;
+				}
+					div#c_debug h2 {
+						margin: 20px 0 0 20px;
+					}
+						div#c_debug h2 small {
+							font-weight: normal;
+						}
+						div#c_debug h2 span.right {
+							float: right;
+							margin-right: 20px;
+						}
+					div#c_debug div {
+						float: left;
+						width: 32%;
+						margin-right: 2%;
+					}
+					div#c_debug div.queries {
+						width: 64%;
+					}
+						div#c_debug div h3 {
+							margin: 5px 0 0 20px;
+							font-weight: normal;
+						}
+				ul#c_debug_messages {
+					height: 210px;
+					background: #FFF;
+					overflow: auto;
+					width: 100%;
+					float: left;
+					border: 1px solid #D7D7D7;
+					margin: -5px 0 0 20px;
+					padding: 5px;
+				}
+					ul#c_debug_messages li {
+						list-style: none;
+					}
+
+				a.c_debug_open {
+					position: fixed;
+					bottom: 20px;
+					right: 20px;
+					font-family: Arial;
+					font-size: 18px;
+					font-weight: bold;
+				}
+			</style>
+			<a class="c_debug_open" href="#" onclick="document.getElementById( 'c_debug' ).style.display = 'block'; sessionStorage.setItem( 'c_debug', 'true' ); return false;">open debug</a>
+			<div id="c_debug">
+				<h2>
+					Debug <small>memory: <?php echo $memory; ?>mb / time: <?php echo $time; ?>ms</small>
+					<span class="right"><a href="#" onclick="document.getElementById( 'c_debug' ).style.display = 'none'; sessionStorage.setItem( 'c_debug', 'false' ); return false;">close debug</a></span>
+				</h2>
+				<div>
+					<h3>Messages (<?php echo count( $messages ); ?>)</h3>
+					<ul id="c_debug_messages">
+						<?php foreach( $messages as $k => $v ):
+							echo '<li><strong>' . $v['type'] . ':</strong> ' . $v['message'] . ' <small>+' . $v['time'] . 'ms / request: ' . $v['location'] . '</small></li>';
+						endforeach; ?>
+					</ul><!--end c_debug_messages-->
+				</div>
+				<div class="queries">
+					<h3>Queries (<?php echo count( $queries ); ?>)</h3>
+					<ul id="c_debug_messages">
+						<?php foreach( $queries as $k => $v ):
+							echo '<pre>' . str_replace( "\t", '', $v['message'] ) . '</pre> <small>+' . $v['time'] . 'ms / request: ' . $v['location'] . '</small></li>';
+						endforeach; ?>
+					</ul><!--end c_debug_messages-->
+				</div>
+			</div><!--end c_debug-->
+			<script type="text/javascript">
+				if( sessionStorage.getItem( 'c_debug' ) == 'true' ) {
+					document.getElementById( 'c_debug' ).style.display = 'block';
+				}
+			</script>
+		<?php
 		}
 	}
 	

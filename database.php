@@ -34,14 +34,11 @@
 			$this->debug = $c_debug;
 			$this->debug->add( 'c_db class loaded' );
 		}
-		
-		//close the connection if it exsits
+
+		//destruct
 		public function __destruct() {
 			//close connection
 			if( $this->conn ) @mysql_close( $this->conn );
-
-			//debug (@ because we cant guarantee debug is still alive)
-			@$this->debug->add( 'Queries: ' . $this->queries, 'mysql' );
 		}
 		
 		//clean data, self referencing function
@@ -109,10 +106,10 @@
 
 			//error handle
 			if( !empty( $err ) )
-				$this->debug->add( $err . '<br />Query:<pre>' . $sql . '</pre>', 'mysql_error', false, true );
+				$this->debug->add( $err . '<br />' . $sql, 'mysql_query_error', false, true );
 
 			//debug
-			$this->debug->add( 'Query:<br /><pre>' . str_replace( '	', '', $sql ) . '</pre>', 'mysql' );
+			$this->debug->add( $sql, 'mysql_query' );
 
 			//query count
 			$this->queries++;

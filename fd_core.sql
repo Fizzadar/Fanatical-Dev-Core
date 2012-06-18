@@ -6,7 +6,7 @@
 # http://code.google.com/p/sequel-pro/
 #
 # Host: localhost (MySQL 5.5.9)
-# Database: feedbug
+# Database: pulsefeed
 # Generation Time: 2012-02-21 15:13:04 +0000
 # ************************************************************
 
@@ -25,7 +25,7 @@
 
 CREATE TABLE `core_user` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `group` tinyint(3) unsigned NOT NULL DEFAULT '1' COMMENT '0=admin;1=user;1>=custom',
+  `group` tinyint(3) unsigned NOT NULL DEFAULT '1',
   `registration_time` int(10) unsigned NOT NULL,
   `login_time` int(10) unsigned NOT NULL,
   `name` varchar(30) NOT NULL DEFAULT '',
@@ -55,7 +55,7 @@ CREATE TABLE `core_user_groups` (
 CREATE TABLE `core_user_oauths` (
   `user_id` int(10) unsigned NOT NULL,
   `provider` varchar(255) NOT NULL DEFAULT '',
-  `o_id` int(10) NOT NULL,
+  `o_id` bigint(20) NOT NULL,
   `token` varchar(255) NOT NULL DEFAULT '',
   `secret` varchar(255) NOT NULL DEFAULT '',
   UNIQUE KEY `provider` (`provider`,`o_id`)
